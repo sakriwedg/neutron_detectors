@@ -107,7 +107,6 @@ def import_nomad_list(self, file_numbers, time_file, data_folder):
 
         with open(time_file, "r") as tf:
 
-
             for line in tf:
                 line = line.strip()
                 if not line:

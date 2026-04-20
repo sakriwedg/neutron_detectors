@@ -26,7 +26,7 @@ reports_folder=str((current_directory.parent).joinpath('reports'))+'/'
 print("Reports folder:",reports_folder )
 
 data_folder="//serdon/illdata/data/ct2/internalUse/rawdata/"
-data_folder="/Volumes/illdata/data/ct2/internalUse/rawdata/"
+#data_folder="/Volumes/illdata/data/ct2/internalUse/rawdata/"
 
 #CSPEC_gain_stability_nxs_file_numbers=np.arange(43490,43573)
 #CSPEC_POS_stability_nxs_file_numbers=np.arange(43648,43729)
@@ -37,9 +37,13 @@ CSPEC_POS_uniformity_nxs_file_number='43763'
 
 
 CSPEC_gain_file_numbers = [43645]
-CSPEC_gain_time="/Volumes/shares/share_sdn/SDN_python/ndet_data_analysis/data/time_gain_files.log"
+# MAC
+CSPEC_gain_time="none"
 CSPEC_gain_data_folder='/Volumes/shares/share_sdn/SDN_python/ndet_data_analysis/data/'
 
+# Windows
+CSPEC_gain_time="none"
+CSPEC_gain_data_folder='//serhom/shares/share_sdn/SDN_python/ndet_data_analysis/data/'
 
 #PHS.stability (ILL.CSPEC(), CSPEC_gain_stability_nxs_file_numbers, data_folder, reports_folder)
 #POS.stability (ILL.CSPEC(), CSPEC_POS_stability_nxs_file_numbers , data_folder, reports_folder,show_figs=False)
