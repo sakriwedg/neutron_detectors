@@ -23,10 +23,13 @@ from scipy.optimize import curve_fit
 from matplotlib.backends.backend_pdf import PdfPages
 warnings.filterwarnings("ignore")
 
+
+board_number = 0 # check with lstheader128 on .lst files (not relevant for nxs files)
+
 ### ------------------------------------------------------------------####
 ### Selection of analysis functions
 ### ------------------------------------------------------------------####
-do_gain_analysis                  = False
+do_gain_analysis                  = True
 do_mean_gain_uniformity_analysis  = True
 do_slit_analysis                  = True
 do_counting_stability_analysis    = True
@@ -63,8 +66,11 @@ POS_stability_nxs = np.arange(44242,44319)
 NAC_image_number = 44335
 BKG_image_number = 44337
 
-# Data files for spatial resolution analysis with slit at different positions
+# Data files for gain map
+gain_file = [44353]
+gain_time = ''
 
+# Data files for spatial resolution analysis with slit at different positions
 slit_data_nxs = ['44203','44205','44208']
 slit_phys_pos = [138.8 + 19.5, 60 + 19.5, 19.5] # cm
 slit_roi_min  = [70,295,460]                    # pixels
@@ -120,10 +126,11 @@ if do_counting_stability_analysis:
 if do_gain_analysis:
     gain.analysis(
         ILL.CSPEC(), 
-        CSPEC_gain_file, 
-        CSPEC_gain_time, 
-        CSPEC_gain_data_folder, 
-        reports_folder
+        gain_file, 
+        gain_time, 
+        data_folder, 
+        reports_folder,
+        board_number
         )
 
 if do_slit_analysis:

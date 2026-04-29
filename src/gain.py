@@ -18,7 +18,7 @@ from matplotlib.colors import BoundaryNorm
 
 
 
-def analysis(det, file_numbers, time, data_folder, reports_folder):
+def analysis(det, file_numbers, time, data_folder, reports_folder, board_number):
     
 
     plt.rcParams['figure.dpi'] = 300
@@ -33,7 +33,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
     print(colored(f"Using threshold at bin {threshold_bin_ab} → {threshold_adc_ab:.1f} adc","yellow"))
 
 
-    data_ab, data_aa, data_bb, data_pos, data_gain, time_list = det.importListMode(file_numbers,time,data_folder)
+    data_ab, data_aa, data_bb, data_pos, data_gain, time_list = det.importListMode(file_numbers,time,data_folder, board_number)
     # data_ab, data_aa, data_bb  --> (file_time, Pulse Height    , tube)
     # data_pos                   --> (file_time, Position A/(A+B), tube)
     # data_gain                  --> (file_time, Pulse Height, Position, tube)
@@ -111,7 +111,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
             ## --------------------------------------------------------------------------------##
             ##  1 Pos vs tube for all times
             ## --------------------------------------------------------------------------------##
-
+            print(colored('Plotting pos vs tube for all times...','green'))
 
             fig, axs = plt.subplots(1,2, sharey=True)
             plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
@@ -126,7 +126,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
                 aspect='auto',
                 extent=[
                     1, counts_vs_tube_pos.shape[1] + 1,                      # x: tube number
-                    0, counts_vs_tube_pos.shape[0] * det.pos_bin_size    # y: position bins → physical
+                    0, 350 * counts_vs_tube_pos.shape[0] * det.pos_bin_size / det.pos_max   # y: position bins → physical
                  ]
             )
             axs[0].set_title('Linear scale', fontsize=6)
@@ -140,7 +140,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
                 aspect='auto',
                 extent=[
                     1, counts_vs_tube_pos.shape[1] + 1,                      # x: tube number
-                    0, counts_vs_tube_pos.shape[0] * det.pos_bin_size    # y: position bins → physical
+                    0, 350 * counts_vs_tube_pos.shape[0] * det.pos_bin_size / det.pos_max   # y: position bins → physical
                  ]
             )
     
@@ -154,7 +154,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
             ## --------------------------------------------------------------------------------##
             ##  2 Total counts vs tube for A+B
             ## --------------------------------------------------------------------------------##
-
+            print(colored('Plotting total counts vs tube for A+B...','green'))
 
             fig, axs = plt.subplots(1,1)
             plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
@@ -182,7 +182,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
             ## --------------------------------------------------------------------------------##
             ##  3 2D histogram of A+B PHS vs tube for all times
             ## --------------------------------------------------------------------------------##
-
+            print(colored('Plotting 2D histogram of A+B PHS vs tube for all times...','green'))
 
             fig, axs = plt.subplots(1,2, sharey=True)
             plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
@@ -228,7 +228,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
             ## --------------------------------------------------------------------------------##
             ##  4 Plot of gain vs tube and deviation from average gain vs tube
             ## --------------------------------------------------------------------------------##
-
+            print(colored('4. Plotting gain vs tube and deviation from average gain vs tube...','green'))
             
             fig, axs = plt.subplots(1,2, sharey=False)
             plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
@@ -267,18 +267,18 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
             ## --------------------------------------------------------------------------------##
             ##  5 Gain map (tube vs pos) for all times and deviation from average gain map. And counts per pixel map
             ## --------------------------------------------------------------------------------##
-
+            print(colored('5. Plotting gain map (tube vs pos) for all times and deviation from average gain map...','green'))
             
             n_colors = 14
 
             # define limits
-            vmin = np.nanmin(16000)
+            vmin = np.nanmin(12000)
             vmax = np.nanmax(gain_vs_tube_vs_pos)
             bounds = np.linspace(vmin, vmax, n_colors + 1)
             cmap = plt.get_cmap('plasma', n_colors)
             norm = BoundaryNorm(bounds, cmap.N)
 
-            fig, axs = plt.subplots(1,3, sharey=True)
+            fig, axs = plt.subplots(1,3, sharey=False)
             plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
             plt.gcf().text(0.512, 0.92, data_folder+str(file_numbers[0])+'-'+str(file_numbers[-1]), ha='center', fontsize=6)
             plt.gcf().text(0.512, 0.89,'', ha='center', fontsize=6,color='red')
@@ -294,7 +294,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
                 norm=norm,
                 extent=[
                     1, gain_vs_tube_vs_pos.shape[1] + 1,
-                    0, gain_vs_tube_vs_pos.shape[0] * det.pos_bin_size
+                    0, 350 * gain_vs_tube_vs_pos.shape[0] * det.pos_bin_size / det.pos_max
                 ]
             )
 
@@ -304,7 +304,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
 
             # set x tics frequency to 4 for better readability
             axs[0].set_xticks(np.arange(1, gain_vs_tube_vs_pos.shape[1] , 8))
-            axs[0].set_ylim(low_limit, 2**16 - low_limit)
+            #axs[0].set_ylim(low_limit, 2**16 - low_limit)
             axs[0].set_title('Gain map (mean PHS)', fontsize=6)
             axs[0].set_xlabel('Tube number',fontsize=6)
             axs[0].set_ylabel('Position',fontsize=6)
@@ -326,14 +326,14 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
                 norm=norm,
                 extent=[
                     1, gain_vs_tube_vs_pos.shape[1] + 1,
-                    0, gain_vs_tube_vs_pos.shape[0] * det.pos_bin_size
+                    0, 350 * gain_vs_tube_vs_pos.shape[0] * det.pos_bin_size / det.pos_max
                 ]
             )
             cbar = plt.colorbar(im1, ax=axs[1], boundaries=bounds)
             cbar.set_ticks(bounds)
             cbar.ax.tick_params(labelsize=6)
 
-            axs[1].set_ylim(low_limit, 2**16 - low_limit)
+            #axs[1].set_ylim(low_limit, 2**16 - low_limit)
             axs[1].set_title('Deviation from average gain (%)', fontsize=6)
             axs[1].set_xlabel('Tube number',fontsize=6)
             axs[1].set_ylabel('Position',fontsize=6)
@@ -356,7 +356,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
                 norm=norm,
                 extent=[
                     1, counts_vs_tube_vs_pos.shape[1] + 1,                      # x: tube number
-                    0, counts_vs_tube_vs_pos.shape[0] * det.pos_bin_size    # y: position bins → physical
+                    0, 350 * counts_vs_tube_vs_pos.shape[0] * det.pos_bin_size / det.pos_max    # y: position bins → physical
                  ]
             )
 
@@ -364,7 +364,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
             cbar.set_ticks(bounds)
             cbar.ax.tick_params(labelsize=6)
 
-            axs[2].set_ylim(low_limit, 2**16 - low_limit)
+            #axs[2].set_ylim(low_limit, 2**16 - low_limit)
 
             axs[2].set_title('Counts map (over threshold)', fontsize=6)
             axs[2].set_xlabel('Tube number',fontsize=6)
@@ -375,54 +375,6 @@ def analysis(det, file_numbers, time, data_folder, reports_folder):
             pdf.savefig()
             plt.close(fig)
 
-            ## --------------------------------------------------------------------------------##
-            ##  5 Gain map (tube vs pos) for all times and deviation from average gain map. And counts per pixel map
-            ## --------------------------------------------------------------------------------##
-
-            
-            n_colors = 14
-
-
-            fig, axs = plt.subplots(1,1, sharey=True)
-            plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
-            plt.gcf().text(0.512, 0.92, data_folder+str(file_numbers[0])+'-'+str(file_numbers[-1]), ha='center', fontsize=6)
-            plt.gcf().text(0.512, 0.89,'', ha='center', fontsize=6,color='red')
-
-            low_limit = 0
-
-            # define limits
-            vmin = np.nanmin(-7)
-            vmax = np.nanmax(7)
-            bounds = np.linspace(vmin, vmax, n_colors + 1)
-            cmap = plt.get_cmap('gnuplot', n_colors)
-            norm = BoundaryNorm(bounds, cmap.N)
-
-            im1 = axs.imshow(
-                deviation_from_avg, 
-                origin='lower',
-                interpolation='nearest',
-                aspect='auto',
-                cmap=cmap,
-                norm=norm,
-                extent=[
-                    1, gain_vs_tube_vs_pos.shape[1] + 1,
-                    0, gain_vs_tube_vs_pos.shape[0] * det.pos_bin_size
-                ]
-            )
-            cbar = plt.colorbar(im1, ax=axs, boundaries=bounds)
-            cbar.set_ticks(bounds)
-            cbar.ax.tick_params(labelsize=6)
-
-            axs.set_ylim(low_limit, 2**16 - low_limit)
-            axs.set_title('Deviation from average gain (%)', fontsize=6)
-            axs.set_xlabel('Tube number',fontsize=6)
-            axs.set_ylabel('Position',fontsize=6)
-
-         
-            plt.tight_layout(rect=[0, 0, 1, 0.95])
-
-            pdf.savefig()
-            plt.close(fig)
-
+           
     process()
     
