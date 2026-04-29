@@ -23,64 +23,119 @@ from scipy.optimize import curve_fit
 from matplotlib.backends.backend_pdf import PdfPages
 warnings.filterwarnings("ignore")
 
-#%% Selection of analysis functions
-os = 'MAC' # Select the operating system on which the python scripts are run: os = "Windows" or os = "MAC"
-do_gain_analysis = False
-do_mean_gain_uniformity_analysis=True
-do_slit_analysis = True
-do_counting_stability_analysis = True
-do_gain_stability_analysis=True
-do_image_analysis=True
+### ------------------------------------------------------------------####
+### Selection of analysis functions
+### ------------------------------------------------------------------####
+do_gain_analysis                  = False
+do_mean_gain_uniformity_analysis  = True
+do_slit_analysis                  = True
+do_counting_stability_analysis    = True
+do_gain_stability_analysis        = True
+do_image_analysis                 = True
 
-#%% Detector data files with ILL NOMAD + CAEN DT1740 modules
-match os:
-    case 'Windows':
-        reports_folder=str((Path.cwd().parent).joinpath('reports'))+'/' # Reports folders
-        data_folder="//serdon/illdata/data/ct2/exp_TEST-3519/rawdata/"  # Data folder
-    case 'MAC':
-        reports_folder=str((Path.cwd().parent).joinpath('reports'))+'/' # Reports folders
-        data_folder="/Volumes/illdata/data/ct2/exp_TEST-3519/rawdata/"  # Data folder
+### ------------------------------------------------------------------####
+### Report output folder
+### ------------------------------------------------------------------####
+reports_folder=str((Path.cwd().parent).joinpath('reports'))+'/'
 
-CSPEC_gain_stability_nxs_file_numbers=np.arange(44380,44451) # Data files for tube Pulse Height Spectrum stability 
-#CSPEC_gain_stability_nxs_file_numbers=np.arange(44380,44382) # Data files for tube Pulse Height Spectrum stability 
-CSPEC_PHS_data_filename=44380 # Data files for tube Pulse Height Spectrum homogeneity
-CSPEC_POS_stability_nxs_file_numbers=np.arange(44242,44319) # Data for files for counting stability with direct beam on CT2
-NAC_image_number=44335 # NAC powder diffraction data file
-BKG_image_number=44337 # Background (No sample) data file
-slit_data_file_list=['44203','44205','44208']
-slit_phys_pos_list=[138.8 + 19.5, 60 + 19.5, 19.5] # cm
-slit_roi_min_list=[70,295,460] # pixels
-slit_roi_max_list=[120,310,470]# pixels 
+### ------------------------------------------------------------------####
+### Path to raw input data (ILL NOMAD + CAEN DT1740 modules)
+### ------------------------------------------------------------------####
+#data_folder="//serdon/illdata/data/ct2/exp_TEST-3519/rawdata/"  # Used on Windows by ILL staff
+data_folder="/Volumes/illdata/data/ct2/exp_TEST-3519/rawdata/"  # Used on Mac by ILL staff
+#data_folder="..." # Used on VISA/linux by external users
 
-# slit_data_file_list=['44456','44453']
-# slit_phys_pos_list=[138.8 + 19.5, 19.5] # cm
-# slit_roi_min_list=[70,460] # pixels
-# slit_roi_max_list=[120,470]# pixels 
+### ------------------------------------------------------------------####
+### Data file numbers for different analyses
+### ------------------------------------------------------------------####
+
+# Data files for tube Pulse Height Spectrum stability 
+PHS_stability_nxs = np.arange(44380,44451) 
+#PHS_stability_nxs = np.arange(44380,44382)
+
+# Data files for tube Pulse Height Spectrum uniformity
+PHS_uniformity_nxs = 44380 
+
+# Data files for counting stability with direct beam on CT2
+POS_stability_nxs = np.arange(44242,44319) 
+
+# NAC powder diffraction data file and background (no sample)
+NAC_image_number = 44335
+BKG_image_number = 44337
+
+# Data files for spatial resolution analysis with slit at different positions
+
+slit_data_nxs = ['44203','44205','44208']
+slit_phys_pos = [138.8 + 19.5, 60 + 19.5, 19.5] # cm
+slit_roi_min  = [70,295,460]                    # pixels
+slit_roi_max  = [120,310,470]                   # pixels 
+
+# slit_data_nxs = ['44456','44453']
+# slit_phys_pos=[138.8 + 19.5, 19.5] # cm
+# slit_roi_min=[70,460] # pixels
+# slit_roi_max=[120,470]# pixels 
 
 
 
-#%% Data analysis
+### Data analysis
 print("Data folder:",data_folder )
 print("Reports folder:",reports_folder )
 
 if do_mean_gain_uniformity_analysis:
-   PHS.uniformity(ILL.CSPEC(),CSPEC_PHS_data_filename,data_folder,reports_folder)
+   PHS.uniformity(
+       ILL.CSPEC(), 
+       PHS_uniformity_nxs, 
+       data_folder, 
+       reports_folder
+       )
 
 if do_image_analysis:
-    image.analysis(ILL.CSPEC(),NAC_image_number,BKG_image_number, data_folder, reports_folder,'NAC_sample')
+    image.analysis(
+        ILL.CSPEC(),
+        NAC_image_number,
+        BKG_image_number,
+        data_folder,
+        reports_folder,
+        'NAC_sample'
+        )
 
 if do_gain_stability_analysis:
-    PHS.stability (ILL.CSPEC(), CSPEC_gain_stability_nxs_file_numbers, data_folder, reports_folder)
+    PHS.stability (
+        ILL.CSPEC(), 
+        PHS_stability_nxs, 
+        data_folder, 
+        reports_folder
+        )
 
 if do_counting_stability_analysis:
-    POS.stability(ILL.CSPEC(),CSPEC_POS_stability_nxs_file_numbers,data_folder,reports_folder,show_figs=False)
+    POS.stability(
+        ILL.CSPEC(),
+        POS_stability_nxs,
+        data_folder,
+        reports_folder,
+        show_figs=False
+        )
 
 # To update with latest version from William
 if do_gain_analysis:
-    gain.analysis(ILL.CSPEC(), CSPEC_gain_file_numbers, CSPEC_gain_time, CSPEC_gain_data_folder, reports_folder)
+    gain.analysis(
+        ILL.CSPEC(), 
+        CSPEC_gain_file, 
+        CSPEC_gain_time, 
+        CSPEC_gain_data_folder, 
+        reports_folder
+        )
 
 if do_slit_analysis:
-    Slit.FWHMvsPOS(ILL.CSPEC(),slit_data_file_list,data_folder, reports_folder,slit_phys_pos_list,slit_roi_min_list,slit_roi_max_list)
+    Slit.FWHMvsPOS(
+        ILL.CSPEC(),
+        slit_data_nxs,
+        data_folder,
+        reports_folder,
+        slit_phys_pos,
+        slit_roi_min,
+        slit_roi_max
+        )
     
 
 
