@@ -42,7 +42,6 @@ CSPEC_gain_time="none"
 CSPEC_gain_data_folder='/Volumes/shares/share_sdn/SDN_python/ndet_data_analysis/data/'
 
 # Windows
-CSPEC_gain_time="none"
 CSPEC_gain_data_folder='//serhom/shares/share_sdn/SDN_python/ndet_data_analysis/data/'
 
 #PHS.stability (ILL.CSPEC(), CSPEC_gain_stability_nxs_file_numbers, data_folder, reports_folder)

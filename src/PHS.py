@@ -11,9 +11,10 @@ from termcolor import colored
 from matplotlib.backends.backend_pdf import PdfPages
 from dateutil import parser
 
-show_figs=False
 
-def uniformity(det, run_number, PHS_data_folder, reports_folder):
+
+def uniformity(det, run_number, PHS_data_folder, reports_folder,show_figs=True,save_figs=True):
+    #print("PHS uniformity analysis of " + det.name + " ("+ PHS_data_folder + str(run_number)+")")
 
     plt.rcParams['figure.dpi'] = 300
     plt.rcParams['savefig.dpi'] = 300
@@ -23,7 +24,9 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder):
     data_file = PHS_data_folder + str(run_number).zfill(6) + '.nxs'
     data,file_time=det.importPHS(data_file)
     
-    report_name=reports_folder+str(run_number)+'_gain_uniformity_.pdf'
+    #report_name=reports_folder+str(run_number)+'_gain_uniformity_.pdf'
+    report_name=str(run_number)+'_gain_uniformity'
+
 
     def process(data,comment=''):
         
@@ -42,9 +45,8 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder):
         det_counts_rel_var=np.round(100*np.std(np.sum(data,0))/det_counts_mean,2)
         
         if show_figs==True:
-        
-        
-            with PdfPages(reports_folder+report_name+' PHS per '+comment+'.pdf') as pdf:
+            
+            with PdfPages(reports_folder+report_name+'_PHS_per_'+comment+'.pdf') as pdf:
                 
                 plt.rc('xtick', labelsize=6)
                 plt.rc('ytick', labelsize=6)
@@ -66,7 +68,8 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder):
                 axs[1].set_ylabel('PHS bin',fontsize=6)
             
                 plt.tight_layout()
-                pdf.savefig()
+                if save_figs:
+                    pdf.savefig()
                 plt.show()
                 
                 fig, axs = plt.subplots(1,2)
@@ -86,7 +89,8 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder):
                 axs[1].set_xlabel('PHS bins',fontsize=6)
                 axs[1].set_box_aspect(1)
                 plt.tight_layout()
-                pdf.savefig()
+                if save_figs:
+                    pdf.savefig()
                 plt.show()
                 
                 fig, axs = plt.subplots(1,2)
@@ -105,7 +109,8 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder):
                 axs[1].set_box_aspect(1)
                 axs[1].set_ylim(-2.5,2.5)
                 plt.tight_layout()
-                pdf.savefig()
+                if save_figs:
+                    pdf.savefig()
                 plt.show()
 
                 
@@ -125,7 +130,8 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder):
                 axs[1].set_box_aspect(1)
                 axs[1].set_ylim(-50,50)
                 plt.tight_layout()
-                pdf.savefig()
+                if save_figs:
+                    pdf.savefig()
                 plt.show()
                 
                 
@@ -184,10 +190,10 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder):
                         axs[1].set_box_aspect(1)
                         axs[1].set_ylim(-10,10)
                         plt.tight_layout()
-                        pdf.savefig()
+                        if save_figs:
+                            pdf.savefig()
                         plt.show()
             
-                   
                     fig, axs = plt.subplots(1,2)
                     plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
                     plt.gcf().text(0.512, 0.92,PHS_data_file+'\n'+file_time, ha='center', fontsize=6)
@@ -212,8 +218,8 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder):
                     axs[1].set_xlabel('Module number',fontsize=6)
                     axs[1].set_box_aspect(1)
                     plt.tight_layout()
-                    
-                    pdf.savefig()
+                    if save_figs:
+                        pdf.savefig()
                     plt.show()
                     
                     del PHSdata_ROI
@@ -235,27 +241,34 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder):
                 mean_pulse_heights_Y,counts_Y,file_time=process(data[:,det.ncols:det.ncols+det.nrows],'Y channel')
                 mean_pulse_heights=np.concatenate(mean_pulse_heights_X,mean_pulse_heights_Y,axis=0)
                 counts=np.concatenate(counts_X,counts_Y,axis=0)
-
-                
+    
+    if save_figs==True: 
+        print('--> ' + report_name)    
+            
     return mean_pulse_heights,counts,file_time # To be adapted for indv. read-out 
                 
                 
-
 def stability(det,run_numbers,data_folder,reports_folder):
     
     mean_pulse_heights_list=[]
     counts_list=[]
     file_time_list=[]
+
     for run in run_numbers:
-        mean_pulse_heights,counts,file_time=uniformity(det, run, data_folder, reports_folder)
+
+        progress = (run - run_numbers[0]) / (run_numbers[-1] - run_numbers[0] + 1) * 100
+        print(f"Processing file {run} ({progress:.2f}%)...", end="\r", flush=True)
+        
+        mean_pulse_heights,counts,file_time=uniformity(det, run, data_folder, reports_folder,show_figs=False,save_figs=False)
         mean_pulse_heights_list.append(mean_pulse_heights)
         counts_list.append(counts)
         file_time_list.append(parser.parse(file_time))
+
     mean_pulse_heights_array=np.array(mean_pulse_heights_list)
     counts_array=np.array(counts_list)
     file_time_array=np.array(file_time_list)
 
-    report_name=reports_folder+str(run_numbers[0])+'_'+str(run_numbers[-1])+'_gain_stability_.pdf'
+    report_name=reports_folder+str(run_numbers[0])+'_'+str(run_numbers[-1])+'_gain_stability.pdf'
 
     with PdfPages(report_name) as pdf:
         
@@ -303,3 +316,5 @@ def stability(det,run_numbers,data_folder,reports_folder):
         plt.tight_layout()
         pdf.savefig()
         plt.show()
+        
+        print('--> ' + report_name) 
