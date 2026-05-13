@@ -111,23 +111,6 @@ position_among_analysis_tube_for_detailed_analysis = 0
 initial_mu1_guess = 158
 
 
-#initial_mu1_guess = 30
-#initial_mu1_guess = 102.8
-#stopping_thickness_mm = [23, 21, 17, 15, 11, 8 , 5]
-#stopping_thickness_mm = [16, 12, 8, 6, 3, 0, -1] # -1 goes for background (no beam)
-#stopping_thickness_mm = [0, 1, 2, 3, 4, 5, 6, 8, 10, 12, -1]
-#stopping_thickness_mm = [0, 2, 3, 4, 5, 7, 9, 11, -1]
-#stopping_thickness_mm = [0, 2, 3, 4, 5, 7, 9, -1] 
-#stopping_thickness_mm = [8, 7, 6, 5, 4, 3, 2, -1]
-#stopping_thickness_mm = [7, 9, -1]
-#stopping_thickness_mm = [3, 0, 2, 4, -1, 5, 7, 6]
-
-#roi_min_cm = 25
-#roi_max_cm = 35
-
-#roi_min_cm = 100
-#roi_max_cm = 110
-
 
 
 ### Data analysis
