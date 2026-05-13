@@ -8,17 +8,15 @@ Created on Wed 26, 2026
 """
 
 import re
-from matplotlib.colors import LinearSegmentedColormap
 import numpy as np
 from termcolor import colored
 import matplotlib.pyplot as plt
 from matplotlib.backends.backend_pdf import PdfPages
-from scipy.optimize import curve_fit
 from matplotlib.colors import BoundaryNorm
 
 
 
-def map(det, file_numbers, time, data_folder, reports_folder, board_number, n_pos_bins=16):
+def map(det, file_numbers, dates, data_folder, reports_folder, board_number, n_pos_bins=16):
     
 
     plt.rcParams['figure.dpi'] = 300
@@ -36,7 +34,7 @@ def map(det, file_numbers, time, data_folder, reports_folder, board_number, n_po
     # setting number of position bins 
     det.set_n_bins_pos(n_pos_bins)
 
-    data_ab, data_aa, data_bb, data_pos, data_gain, time_list = det.importListMode(file_numbers,time,data_folder, board_number)
+    data_ab, data_aa, data_bb, data_pos, data_gain, time_list = det.importListMode(file_numbers, dates, data_folder, board_number)
     # data_ab, data_aa, data_bb  --> (file_time, Pulse Height    , tube)
     # data_pos                   --> (file_time, Position A/(A+B), tube)
     # data_gain                  --> (file_time, Pulse Height, Position, tube)
