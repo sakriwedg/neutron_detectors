@@ -18,20 +18,23 @@ from matplotlib.colors import BoundaryNorm
 
 
 
-def analysis(det, file_numbers, time, data_folder, reports_folder, board_number):
+def map(det, file_numbers, time, data_folder, reports_folder, board_number, n_pos_bins=16):
     
 
     plt.rcParams['figure.dpi'] = 300
     plt.rcParams['savefig.dpi'] = 300
     plt.ion()
     plt.style.use('bmh')
-    
+
+    analysis_tube = 26  # tube number to analyze in detail (for scatter plot of gain vs position)    
 
     # counts rate (over PHS threshold) per tube vs time
-    threshold_bin_ab = 25  #
+    threshold_bin_ab = 12  #
     threshold_adc_ab  = threshold_bin_ab * det.ene_bin_size   
-    print(colored(f"Using threshold at bin {threshold_bin_ab} → {threshold_adc_ab:.1f} adc","yellow"))
+    print(colored(f"--- Using threshold at bin {threshold_bin_ab} → {threshold_adc_ab:.1f} adc","yellow"))
 
+    # setting number of position bins 
+    det.set_n_bins_pos(n_pos_bins)
 
     data_ab, data_aa, data_bb, data_pos, data_gain, time_list = det.importListMode(file_numbers,time,data_folder, board_number)
     # data_ab, data_aa, data_bb  --> (file_time, Pulse Height    , tube)
@@ -42,8 +45,6 @@ def analysis(det, file_numbers, time, data_folder, reports_folder, board_number)
     
     
     def process():
-
-        print(colored('### Processing gain data...','green'))
 
         # total counts in all times vs tube (over PHS threshold)
         counts_vs_tube_ab = (data_ab[:, threshold_bin_ab:, :].sum(axis=1)).sum(axis=0)  # (tube,)
@@ -111,9 +112,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder, board_number)
             ## --------------------------------------------------------------------------------##
             ##  1 Pos vs tube for all times
             ## --------------------------------------------------------------------------------##
-            print(colored('Plotting pos vs tube for all times...','green'))
-
-            fig, axs = plt.subplots(1,2, sharey=True)
+            fig, axs = plt.subplots(1,2, sharey=False)
             plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
             plt.gcf().text(0.512, 0.92, data_folder+str(file_numbers[0])+'-'+str(file_numbers[-1]), ha='center', fontsize=6)
             plt.gcf().text(0.512, 0.89,'Pos vs tube for all times', ha='center', fontsize=6,color='red')
@@ -131,7 +130,7 @@ def analysis(det, file_numbers, time, data_folder, reports_folder, board_number)
             )
             axs[0].set_title('Linear scale', fontsize=6)
             axs[0].set_xlabel('Tube number',fontsize=6)
-            axs[0].set_ylabel('Pos bin',fontsize=6)     
+            axs[0].set_ylabel('Position (cm)',fontsize=6)     
             
             im1 = axs[1].imshow(
                 np.log(counts_vs_tube_pos + 1), 
@@ -154,7 +153,6 @@ def analysis(det, file_numbers, time, data_folder, reports_folder, board_number)
             ## --------------------------------------------------------------------------------##
             ##  2 Total counts vs tube for A+B
             ## --------------------------------------------------------------------------------##
-            print(colored('Plotting total counts vs tube for A+B...','green'))
 
             fig, axs = plt.subplots(1,1)
             plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
@@ -182,7 +180,6 @@ def analysis(det, file_numbers, time, data_folder, reports_folder, board_number)
             ## --------------------------------------------------------------------------------##
             ##  3 2D histogram of A+B PHS vs tube for all times
             ## --------------------------------------------------------------------------------##
-            print(colored('Plotting 2D histogram of A+B PHS vs tube for all times...','green'))
 
             fig, axs = plt.subplots(1,2, sharey=True)
             plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
@@ -228,7 +225,6 @@ def analysis(det, file_numbers, time, data_folder, reports_folder, board_number)
             ## --------------------------------------------------------------------------------##
             ##  4 Plot of gain vs tube and deviation from average gain vs tube
             ## --------------------------------------------------------------------------------##
-            print(colored('4. Plotting gain vs tube and deviation from average gain vs tube...','green'))
             
             fig, axs = plt.subplots(1,2, sharey=False)
             plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
@@ -267,7 +263,6 @@ def analysis(det, file_numbers, time, data_folder, reports_folder, board_number)
             ## --------------------------------------------------------------------------------##
             ##  5 Gain map (tube vs pos) for all times and deviation from average gain map. And counts per pixel map
             ## --------------------------------------------------------------------------------##
-            print(colored('5. Plotting gain map (tube vs pos) for all times and deviation from average gain map...','green'))
             
             n_colors = 14
 
@@ -374,6 +369,8 @@ def analysis(det, file_numbers, time, data_folder, reports_folder, board_number)
 
             pdf.savefig()
             plt.close(fig)
+
+        
 
            
     process()

@@ -44,7 +44,7 @@ reports_folder=str((Path.cwd().parent).joinpath('reports'))+'/'
 ### ------------------------------------------------------------------####
 ### Path to raw input data (ILL NOMAD + CAEN DT1740 modules)
 ### ------------------------------------------------------------------####
-#data_folder="//serdon/illdata/data/ct2/exp_TEST-3519/rawdata/"  # Used on Windows by ILL staff
+data_folder="//serdon/illdata/data/ct2/exp_TEST-3519/rawdata/"  # Used on Windows by ILL staff
 data_folder="/Volumes/illdata/data/ct2/exp_TEST-3519/rawdata/"  # Used on Mac by ILL staff
 #data_folder="..." # Used on VISA/linux by external users
 
@@ -69,6 +69,7 @@ BKG_image_number = 44337
 # Data files for gain map
 gain_file = [44353]
 gain_time = ''
+n_pos_bins = 16  
 
 # Data files for spatial resolution analysis with slit at different positions
 slit_data_nxs = ['44203','44205','44208']
@@ -84,10 +85,11 @@ slit_roi_max  = [120,310,470]                   # pixels
 
 
 ### Data analysis
-print("Data folder:",data_folder )
-print("Reports folder:",reports_folder )
+print("--> Input data folder:", data_folder)
+print("--> Output reports folder:", reports_folder)
 
 if do_mean_gain_uniformity_analysis:
+   print("--> Computing mean gain uniformity analysis of " + str(PHS_uniformity_nxs) )
    PHS.uniformity(
        ILL.CSPEC(), 
        PHS_uniformity_nxs, 
@@ -96,6 +98,7 @@ if do_mean_gain_uniformity_analysis:
        )
 
 if do_image_analysis:
+    print("--> Computing image analysis of " + str(NAC_image_number) )
     image.analysis(
         ILL.CSPEC(),
         NAC_image_number,
@@ -106,6 +109,7 @@ if do_image_analysis:
         )
 
 if do_gain_stability_analysis:
+    print("--> Computing gain stability analysis of " + str(PHS_stability_nxs[0]) + " to " + str(PHS_stability_nxs[-1]) )
     PHS.stability (
         ILL.CSPEC(), 
         PHS_stability_nxs, 
@@ -114,6 +118,7 @@ if do_gain_stability_analysis:
         )
 
 if do_counting_stability_analysis:
+    print("--> Computing counting stability analysis of " + str(POS_stability_nxs[0]) + " to " + str(POS_stability_nxs[-1]) )
     POS.stability(
         ILL.CSPEC(),
         POS_stability_nxs,
@@ -122,18 +127,20 @@ if do_counting_stability_analysis:
         show_figs=False
         )
 
-# To update with latest version from William
 if do_gain_analysis:
-    gain.analysis(
+    print("--> Computing gain map of " + str(gain_file) )
+    gain.map(
         ILL.CSPEC(), 
         gain_file, 
         gain_time, 
         data_folder, 
         reports_folder,
-        board_number
+        board_number,
+        n_pos_bins
         )
 
 if do_slit_analysis:
+    print("--> Computing slit analysis of " + str(slit_data_nxs) )
     Slit.FWHMvsPOS(
         ILL.CSPEC(),
         slit_data_nxs,

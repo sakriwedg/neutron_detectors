@@ -86,7 +86,7 @@ def createPHS(self,ToAPerMulti,TOTPerMulti,ChNbPerMulti,sepIdxPerMulti,multiMax)
 
 def import_QDIV_nomad_list(self, file_numbers, time_file, data_folder, board_number=0):
 
-        print('### Importing files with numbers from ' + str(file_numbers[0]) + ' to ' + str(file_numbers[-1]))
+        print('---- Importing list files from ' + str(file_numbers[0]) + ' to ' + str(file_numbers[-1]))
 
         # -----------------------------
         # Read time mapping
@@ -94,7 +94,7 @@ def import_QDIV_nomad_list(self, file_numbers, time_file, data_folder, board_num
         time_map = {}
 
         if not time_file or not os.path.exists(time_file):
-            print(" - Warning: No time file provided, all files will be assigned the time of the analysis execution")
+            print("---- Warning: No time file provided, all files will be assigned the time of the analysis execution")
             now = datetime.now()
             for i in file_numbers:
                 key = f"0{i}"
@@ -102,7 +102,7 @@ def import_QDIV_nomad_list(self, file_numbers, time_file, data_folder, board_num
 
         else:
 
-            print(f"Reading time mapping from {time_file}...")
+            print(f"---- Reading time mapping from {time_file}...")
             with open(time_file, "r") as tf:
 
 
@@ -144,9 +144,16 @@ def import_QDIV_nomad_list(self, file_numbers, time_file, data_folder, board_num
         for i_file in file_numbers:
 
             progress = (i_file - file_numbers[0]) / (file_numbers[-1] - file_numbers[0] + 1) * 100
-            print(f"Processing file {i_file} ({progress:.2f}%)...", end="\r", flush=True)
+            print(f"---- Processing file {i_file} ({progress:.2f}%)...", end="\r", flush=True)
 
+            
             filename = f"{data_folder}/0{i_file}.lst"
+            # check if file exists before processing. Otherwise full stop
+            if not os.path.exists(filename):
+                raise FileNotFoundError(f"Missing file: {filename}")
+            else:
+                print(f"---- Processing file: {filename}")
+
             key = os.path.splitext(os.path.basename(filename))[0]
 
             try:
@@ -160,13 +167,13 @@ def import_QDIV_nomad_list(self, file_numbers, time_file, data_folder, board_num
 
                 # check if file exists before opening
                 if not os.path.exists(filename):
-                    raise ValueError(f"Missing file: {filename}")
+                    raise ValueError(f"---- Missing file: {filename}")
                     
 
                 raw = np.fromfile(filename, dtype=np.int32)
 
                 if raw.size % 4 != 0:
-                    raise ValueError("File corrupted: not multiple of 4 int32 words")
+                    raise ValueError("---- File corrupted: not multiple of 4 int32 words")
 
                 events = raw.reshape(-1, 4)
 
@@ -207,7 +214,7 @@ def import_QDIV_nomad_list(self, file_numbers, time_file, data_folder, board_num
                 # run over all events but skip first two
                 for i in range(2, n):
                     if i % 100000 == 0:   # adjust frequency
-                        print(f"Processing... {i/n:.2%}", end="\r", flush=True)
+                        print(f"... {i/n:.2%}", end="\r", flush=True)
   
                     if board[i] != board_number:
                         continue  # skip events from other boards if present
@@ -251,13 +258,13 @@ def import_QDIV_nomad_list(self, file_numbers, time_file, data_folder, board_num
                 if key in time_map:
                     t = time_map[key]
                 else:
-                    print(f" - Warning: Missing time for {key}, using now()")
+                    print(f"---- Warning: Missing time for {key}, using now()")
                     t = datetime.now()
 
                 global_time_list.append(t)
 
             except FileNotFoundError:
-                print(f" - Warning: Missing file: {filename}")
+                print(f"---- Warning: Missing file: {filename}")
                 continue
 
         # -----------------------------
@@ -329,7 +336,7 @@ class CSPEC(ndet_lib.ndet):
         self.n_bins_ene     = 2**8
         self.ene_max        = 2**16
 
-        self.n_bins_pos     = 2**4#10
+        self.n_bins_pos     = 2**6#10
         self.pos_max        = 2**16
 
         self.n_bins_Dt      = 2**17 # 19
@@ -343,6 +350,9 @@ class CSPEC(ndet_lib.ndet):
 
         self.channel_inversion = True # set to True if channel numbering is reversed in data files (tube 0 on the right)
     
+    def set_n_bins_pos(self, n_bins_pos):
+        self.n_bins_pos = n_bins_pos
+        self.pos_bin_size = self.pos_max / self.n_bins_pos
 
     def importListMode(self, file_numbers, time_file, data_folder, board_number):
         ab, aa, bb, pos, gain, time_list = import_QDIV_nomad_list(self, file_numbers, time_file, data_folder, board_number)

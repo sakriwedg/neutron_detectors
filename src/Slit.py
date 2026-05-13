@@ -83,7 +83,7 @@ def FWHMvsPOS(det, data_file_list ,data_folder, reports_folder,slit_phys_pos_lis
     [a,b], _ = curve_fit(linear, x, y)
     ym = linear(x, *[a,b])
     
-    print("linear fit slope =" + str(1/a) + " pixels per cm")
+    #print("linear fit slope =" + str(1/a) + " pixels per cm")
     report_name=reports_folder+'FWHM.pdf'
     
     with PdfPages(report_name) as pdf:
@@ -104,8 +104,8 @@ def FWHMvsPOS(det, data_file_list ,data_folder, reports_folder,slit_phys_pos_lis
         plt.legend(['Data','Linear fit'], fontsize=6)
     
         for n in np.arange(len(data_file_list)):
-            print('FWHM =' + str(round(abs(2.35*popt[n,2]/a),2)) + ' cm at position ' + str(slit_phys_pos_list[n]) + ' cm')
-            plt.gcf().text(0.2, 0.2+n*0.05,'FWHM =' + str(round(abs(2.35*popt[n,2]/a),2)) + ' cm at position ' + str(slit_phys_pos_list[n]) + ' cm', fontsize=6)
+            print('--- FWHM = ' + str(round(abs(2.35*popt[n,2]/a),2)) + ' cm at ' + str(slit_phys_pos_list[n]) + ' cm')
+            plt.gcf().text(0.2, 0.2+n*0.05,'FWHM = ' + str(round(abs(2.35*popt[n,2]/a),2)) + ' cm at position ' + str(slit_phys_pos_list[n]) + ' cm', fontsize=6)
         
         plt.tight_layout()
         pdf.savefig()

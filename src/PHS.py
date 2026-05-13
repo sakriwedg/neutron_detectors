@@ -14,7 +14,6 @@ from dateutil import parser
 
 
 def uniformity(det, run_number, PHS_data_folder, reports_folder,show_figs=True,save_figs=True):
-    #print("PHS uniformity analysis of " + det.name + " ("+ PHS_data_folder + str(run_number)+")")
 
     plt.rcParams['figure.dpi'] = 300
     plt.rcParams['savefig.dpi'] = 300
@@ -243,7 +242,7 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder,show_figs=True,s
                 counts=np.concatenate(counts_X,counts_Y,axis=0)
     
     if save_figs==True: 
-        print('--> ' + report_name)    
+        print('---- output file: ' + report_name)    
             
     return mean_pulse_heights,counts,file_time # To be adapted for indv. read-out 
                 
@@ -317,4 +316,4 @@ def stability(det,run_numbers,data_folder,reports_folder):
         pdf.savefig()
         plt.show()
         
-        print('--> ' + report_name) 
+        print('---- output file: ' + report_name) 
