@@ -107,6 +107,44 @@ def map(det, file_numbers, dates, data_folder, reports_folder, board_number, n_p
             plt.rc('xtick', labelsize=6)
             plt.rc('ytick', labelsize=6)
 
+            # plot of counting rate map and projection on both axes
+
+            time = 600  # s
+            counting_rate_map = counts_vs_tube_vs_pos / time
+
+            fig, axs = plt.subplots(2,2, sharey=False)
+            plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
+            plt.gcf().text(0.512, 0.92, data_folder+str(file_numbers[0])+'-'+str(file_numbers[-1]), ha='center', fontsize=6)
+            plt.gcf().text(0.512, 0.89,'', ha='center', fontsize=6,color='red')
+
+            axs[0,0].imshow(
+                counting_rate_map.T, 
+                origin='lower', 
+                interpolation='nearest', 
+                aspect='auto',
+                extent=[
+                    0, 350 * counting_rate_map.shape[0] * det.pos_bin_size / det.pos_max,    # y: position bins → physical
+                    1, counting_rate_map.shape[1] + 1                      # x: tube number
+
+                 ]
+            )
+            axs[0,0].set_xlabel('position (cm)',fontsize=6)
+            axs[0,0].set_ylabel('Tube number',fontsize=6)
+
+            pos_axis = np.arange(counting_rate_map.shape[0]) * det.pos_bin_size * 350 / det.pos_max
+            xticks = np.arange(0, det.ntubes + 2, 4)
+            axs[0,1].plot(counting_rate_map.sum(axis=0), color='blue', alpha=0.7, linewidth=0.5, marker='o', markersize=3)
+            axs[0,1].set_xlabel('Tube number',fontsize=6)
+            axs[0,1].set_ylabel('Counting rate (Hz)',fontsize=6)
+            axs[1,0].plot(pos_axis, counting_rate_map.sum(axis=1), color='blue', alpha=0.7, linewidth=0.5, marker='o', markersize=3)
+            axs[1,0].set_xlabel('Position (cm)',fontsize=6)
+            axs[1,0].set_ylabel('Counting rate (Hz)',fontsize=6)
+            axs[1,1].axis('off')
+            plt.tight_layout(rect=[0, 0, 1, 0.95])
+            pdf.savefig()
+            plt.close(fig)
+
+
             ## --------------------------------------------------------------------------------##
             ##  1 Pos vs tube for all times
             ## --------------------------------------------------------------------------------##
@@ -304,9 +342,11 @@ def map(det, file_numbers, dates, data_folder, reports_folder, board_number, n_p
 
 
             # define limits
-            vmin = np.nanmin(-7)
-            vmax = np.nanmax(7)
-            bounds = np.linspace(vmin, vmax, n_colors + 1)
+            #vmin = np.nanmin(-7)
+            #vmax = np.nanmax(7)
+            #bounds = np.linspace(vmin, vmax, n_colors + 1)
+            # define these values as bounds : [-7, -6, -5, 0, 5, 6, 7]
+            bounds = [-6, -5, -4, 0, 4, 5, 6]
             cmap = plt.get_cmap('gnuplot', n_colors)
             norm = BoundaryNorm(bounds, cmap.N)
 
@@ -368,7 +408,7 @@ def map(det, file_numbers, dates, data_folder, reports_folder, board_number, n_p
             pdf.savefig()
             plt.close(fig)
 
-        
+
 
            
     process()

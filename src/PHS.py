@@ -28,6 +28,8 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder,show_figs=True,s
 
 
     def process(data,comment=''):
+
+        energy_threshold_bin = 50
         
         bins=np.arange(np.size(data,0))
         bins_array=np.tile(bins.T,(np.size(data,1),1)).T
@@ -47,6 +49,9 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder,show_figs=True,s
             
             with PdfPages(reports_folder+report_name+'_PHS_per_'+comment+'.pdf') as pdf:
                 
+
+                ### ------------------------------------------------------------------####
+
                 plt.rc('xtick', labelsize=6)
                 plt.rc('ytick', labelsize=6)
                 
@@ -55,13 +60,14 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder,show_figs=True,s
                 plt.gcf().text(0.512, 0.92,data_file+'\n'+file_time, ha='center', fontsize=6)
                 plt.gcf().text(0.512, 0.89,'Pulse Height Spectra (PHS) intensity map', ha='center', fontsize=6,color='red')
                 im0=axs[0].imshow(data,origin='lower',interpolation = 'none',aspect=det.det_aspect_ratio)
-                #plt.suptitle(det.detname+'\n'+PHS_data_file+'\n'+file_time+'\n'+'\n'+'Pulse Height Spectra (PHS) intensity map', fontsize=8, color='#444', ha='center')
                 axs[0].set_title('Linear scale', fontsize=6)
                 axs[0].set_xlabel(comment+' number',fontsize=6)
                 axs[0].set_ylabel('PHS bin',fontsize=6)
+                axs[0].axhline(y=energy_threshold_bin, color='r', linestyle='--', linewidth=0.5)
                 #plt.colorbar(im0,cax=axs[0])
                 
                 im1=axs[1].imshow(np.log(data),origin='lower',interpolation = 'none',aspect=det.det_aspect_ratio)
+                axs[1].axhline(y=energy_threshold_bin, color='r', linestyle='--', linewidth=0.5)
                 axs[1].set_title('Log scale', fontsize=6)
                 axs[1].set_xlabel(comment+' number',fontsize=6)
                 axs[1].set_ylabel('PHS bin',fontsize=6)
@@ -71,6 +77,9 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder,show_figs=True,s
                     pdf.savefig()
                 plt.show()
                 
+
+                ### ------------------------------------------------------------------####
+
                 fig, axs = plt.subplots(1,2)
                 plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
                 plt.gcf().text(0.512, 0.92,data_file+'\n'+file_time, ha='center', fontsize=6)
@@ -92,6 +101,9 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder,show_figs=True,s
                     pdf.savefig()
                 plt.show()
                 
+
+                ### ------------------------------------------------------------------####
+
                 fig, axs = plt.subplots(1,2)
                 plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
                 plt.gcf().text(0.512, 0.92,data_file+'\n'+file_time, ha='center', fontsize=6)
@@ -112,7 +124,9 @@ def uniformity(det, run_number, PHS_data_folder, reports_folder,show_figs=True,s
                     pdf.savefig()
                 plt.show()
 
-                
+                ### ------------------------------------------------------------------####
+
+
                 fig, axs = plt.subplots(1,2)
                 plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
                 plt.gcf().text(0.512, 0.92,data_file+'\n'+file_time, ha='center', fontsize=6)
@@ -317,3 +331,79 @@ def stability(det,run_numbers,data_folder,reports_folder):
         plt.show()
         
         print('---- output file: ' + report_name) 
+
+
+def global_uniformity(det,run_numbers,data_folder,reports_folder):
+    
+
+    file_time_list=[]
+    all_data_list=[]
+
+    for run in run_numbers:
+
+        progress = (run - run_numbers[0]) / (run_numbers[-1] - run_numbers[0] + 1) * 100
+        print(f"Processing file {run} ({progress:.2f}%)...", end="\r", flush=True)
+
+        data_file      = data_folder + str(run).zfill(6) + '.nxs'
+        data,file_time = det.importPHS(data_file)
+        all_data_list.append(data)
+        file_time_list.append(parser.parse(file_time))
+
+    all_data_array=np.array(all_data_list)
+    file_time_array=np.array(file_time_list)
+
+    # summ all data to get a global PHS for each channel
+    global_PHS_array=np.sum(all_data_array,0)
+
+    report_name=reports_folder+str(run_numbers[0])+'_'+str(run_numbers[-1])+'_global_gain_uniformity.pdf'
+
+    with PdfPages(report_name) as pdf:
+
+        ### ------------------------------------------------------------------####
+        # Plot 2D map of the global PHS for each channel
+        plt.rc('xtick', labelsize=6)
+        plt.rc('ytick', labelsize=6)
+        fig, axs = plt.subplots(1,2)
+        plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
+        plt.gcf().text(0.512, 0.92,'Global PHS for runs '+str(run_numbers[0])+' to '+str(run_numbers[-1]), ha='center', fontsize=6,color='red')
+        im0=axs[0].imshow(global_PHS_array,origin='lower',interpolation = 'none',aspect=det.det_aspect_ratio)
+        axs[0].set_title('Linear scale', fontsize=6)
+
+        axs[0].set_xlabel('Channel number',fontsize=6)
+        axs[0].set_ylabel('PHS bin',fontsize=6)
+        axs[0].axhline(y=50, color='r', linestyle='--', linewidth=0.5)
+        #plt.colorbar(im0,cax=axs[0])
+        im1=axs[1].imshow(np.log(global_PHS_array),origin='lower',interpolation = 'none',aspect=det.det_aspect_ratio)
+        axs[1].set_title('Log scale', fontsize=6)
+        axs[1].set_xlabel('Channel number',fontsize=6)
+        axs[1].set_ylabel('PHS bin',fontsize=6)
+        axs[1].axhline(y=50, color='r', linestyle='--', linewidth=0.5)
+        plt.tight_layout()
+
+        pdf.savefig()
+        plt.show()
+
+
+        ### ------------------------------------------------------------------####
+        # plot of PHS for each channel
+        fig, axs = plt.subplots(1,2)
+        plt.suptitle(det.detname, x=0.512, y=0.99, fontsize=8, ha='center')
+        plt.gcf().text(0.512, 0.92,'Global PHS for runs '+str(run_numbers[0])+' to '+str(run_numbers[-1]), ha='center', fontsize=6,color='red')
+        for tube in range(det.det_ncols):
+            axs[0].plot((global_PHS_array[:,tube]),color='m',linewidth=0.5)
+        axs[0].set_title('Linear scale', fontsize=6)
+        axs[0].set_ylabel('a.u.',fontsize=6)
+        axs[0].set_xlabel('PHS bins',fontsize=6)
+        axs[0].set_box_aspect(1)
+        for tube in range(det.det_ncols):
+            axs[1].plot(np.log((global_PHS_array[:,tube])),color='c',linewidth=0.5)
+        axs[1].set_title('Log scale', fontsize=6)
+        axs[1].set_ylabel('a.u.',fontsize=6)
+
+        axs[1].set_xlabel('PHS bins',fontsize=6)
+        axs[1].set_box_aspect(1)
+        plt.tight_layout()
+
+        pdf.savefig()
+        plt.show()
+        

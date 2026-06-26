@@ -30,13 +30,13 @@ board_number = 0 # check with lstheader128 on .lst files (not relevant for nxs f
 ### ------------------------------------------------------------------####
 ### Selection of analysis functions
 ### ------------------------------------------------------------------####
-do_gain_analysis                  = 0
+do_gain_map_analysis              = 0
 do_mean_gain_uniformity_analysis  = 0
 do_slit_analysis                  = 0
-do_counting_stability_analysis    = 0
+do_counting_stability_analysis    = 1
 do_gain_stability_analysis        = 0
 do_image_analysis                 = 0
-do_counting_linearity_analysis    = 1
+do_counting_linearity_analysis    = 0
 
 ### ------------------------------------------------------------------####
 ### Report output folder
@@ -46,8 +46,9 @@ reports_folder=str((Path.cwd().parent).joinpath('reports'))+'/'
 ### ------------------------------------------------------------------####
 ### Path to raw input data (ILL NOMAD + CAEN DT1740 modules)
 ### ------------------------------------------------------------------####
-data_folder="//serdon/illdata/data/ct2/exp_TEST-3519/rawdata/"  # Used on Windows by ILL staff
-data_folder="/Volumes/illdata/data/ct2/exp_TEST-3519/rawdata/"  # Used on Mac by ILL staff
+data_folder="//serdon/illdata/data-1/ct2/exp_TEST-3519/rawdata/"  # Used on Windows by ILL staff
+data_folder="/Volumes/illdata/data-1/ct2/exp_TEST-3519/rawdata/"  # Used on Mac by ILL staff
+#data_folder="/Volumes/illdata/data-1/ct2/internalUse/rawdata/"  # Used on Mac by ILL staff
 #data_folder="..." # Used on VISA/linux by external users
 
 ### ------------------------------------------------------------------####
@@ -65,7 +66,7 @@ PHS_uniformity_nxs = 44380
 
 ### --------------
 # Data files for counting stability with direct beam on CT2
-POS_stability_nxs = np.arange(44242,44319) 
+POS_stability_nxs = np.arange(44675,45773) 
 
 ### --------------
 # NAC powder diffraction data file and background (no sample)
@@ -74,9 +75,15 @@ BKG_image_number = 44337
 
 ### --------------
 # Data files for gain map
-gain_file = [44353]
+#gain_file = [44353]
+gain_file = np.arange(45891,45908)
+gain_file = np.arange(45917,45967)#46005
+gain_file = np.arange(46044,46052)
+gain_file = np.arange(43355,43356)
+#gain_file = [43348]
+
 gain_dates = ''
-n_pos_bins = 16  
+n_pos_bins = 1024  
 
 ### --------------
 # Data files for spatial resolution analysis with slit at different positions
@@ -119,7 +126,8 @@ print("--> Output reports folder:", reports_folder)
 
 
 if do_counting_linearity_analysis:
-    
+
+    print("--> Computing counting linearity analysis of " + str(attenuator_files) )
     cl.analysis(
         ILL.CSPEC(),
         attenuator_files,
@@ -175,7 +183,7 @@ if do_counting_stability_analysis:
         show_figs=False
         )
 
-if do_gain_analysis:
+if do_gain_map_analysis:
     print("--> Computing gain map of " + str(gain_file) )
     gain.map(
         ILL.CSPEC(), 

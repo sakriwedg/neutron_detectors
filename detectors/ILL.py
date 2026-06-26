@@ -348,7 +348,7 @@ class CSPEC(ndet_lib.ndet):
         self.pos_bin_size   = self.pos_max / self.n_bins_pos
         self.Dt_bin_size    = self.Dt_max / self.n_bins_Dt
 
-        self.channel_inversion = True # set to True if channel numbering is reversed in data files (tube 0 on the right)
+        self.channel_inversion = False # set to True if channel numbering is reversed in data files (tube 0 on the right)
     
     def set_n_bins_pos(self, n_bins_pos):
         self.n_bins_pos = n_bins_pos
@@ -379,6 +379,7 @@ class CSPEC(ndet_lib.ndet):
         f=importnxs(filename)        
         PHSdata=np.squeeze(np.sum(f['/entry0/data1/Detector1_data'],2)).T
         BM_sum=f['/entry0/monitor1/monitor1data'][0,0]
+        duration = f['/entry0/duration'][0]
         file_time=f.attrs['file_time'].decode()
         
         #from datetime import datetime
@@ -389,7 +390,7 @@ class CSPEC(ndet_lib.ndet):
         #file_time = datetime.strptime(file_time_str, format_str)
         #file_time=str(datetime.datetime.today())
         f.close()
-        return PHSdata,file_time,BM_sum
+        return PHSdata,file_time,BM_sum,duration
 
 
 

@@ -1,0 +1,10 @@
+reports/*
+
+# ignore all logs
+*.log
+
+.vscode/*
+data/*
+*/__pycache__/*
+
+.DS_Store

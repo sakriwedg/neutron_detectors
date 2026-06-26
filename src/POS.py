@@ -4,6 +4,8 @@ Created on Mon Mar 16 16:48:26 2026
 
 @author: marchalj
 """
+import sys
+
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
@@ -18,7 +20,7 @@ def gaussian(x, a, x0, sigma):
     return a * np.exp(-(x - x0)**2 / (2 * sigma**2))
 
 
-def uniformity(det, run_number, data_folder, reports_folder, show_figs=True):
+def uniformity(det, run_number, data_folder, reports_folder, show_figs=True, threshold_bin=50):
 
     # This function processes the data of a single file and produces a counting uniformity analysis
 
@@ -28,16 +30,17 @@ def uniformity(det, run_number, data_folder, reports_folder, show_figs=True):
     plt.style.use('bmh')
     
     data_file = data_folder + str(run_number).zfill(6) + '.nxs'
-    data,file_time,BM_sum = det.importPOS(data_file)
+    data,file_time,BM_sum, duration = det.importPOS(data_file)
 
     report_name=reports_folder+str(run_number)+'_counting_uniformity.pdf'
 
     def process(data):
         
-        
-        counts=(np.sum(data,0))
+        counts_above=(np.sum(data[threshold_bin:,:],0))
+        counts_below=(np.sum(data[:threshold_bin,:],0))
+
         if show_figs==True:
-        
+
         
             with PdfPages(report_name) as pdf:
                 
@@ -112,27 +115,42 @@ def uniformity(det, run_number, data_folder, reports_folder, show_figs=True):
                 plt.show()
                 
    
-        return counts,file_time
+        return counts_above, counts_below, file_time
 
-    counts,file_time=process(data)
+    counts_above, counts_below, file_time=process(data)
                
-    return counts,file_time,BM_sum # To be adapted for indv. read-out 
+    return counts_above, counts_below, file_time, BM_sum, duration # To be adapted for indv. read-out 
                 
                 
 
-def stability(det,run_numbers,data_folder,reports_folder,show_figs=False):
+def stability(det,run_numbers,data_folder,reports_folder,show_figs=False, threshold_bin=50):
 
-    counts_list=[]
+    counts_above_list=[]
+    counts_below_list=[]
     file_time_list=[]
     BM_sum_list=[]
+    duration_list=[]
     for run in run_numbers:
-        counts,file_time,BM_sum=uniformity(det, run, data_folder, reports_folder, show_figs=False)
-        counts_list.append(counts)
+        
+        progress = (run - run_numbers[0]) / (run_numbers[-1] - run_numbers[0] + 1) * 100
+        print(f"---- Processing file {run} ({progress:.2f}%)...", end="\r", flush=True)
+
+
+        
+        counts_above, counts_below, file_time, BM_sum, duration = uniformity(det, run, data_folder, reports_folder, show_figs, threshold_bin)
+        
+        counts_above_list.append(counts_above)
+        counts_below_list.append(counts_below)
+
         file_time_list.append(parser.parse(file_time))
         BM_sum_list.append(BM_sum)
-    counts_array=np.array(counts_list)
-    file_time_array=np.array(file_time_list)
-    BM_sum_array=np.array(BM_sum_list)
+        duration_list.append(duration)
+
+    counts_above_array = np.array(counts_above_list)
+    counts_below_array = np.array(counts_below_list)
+    file_time_array    = np.array(file_time_list)
+    BM_sum_array       = np.array(BM_sum_list)
+    duration_array     = np.array(duration_list)
 
     report_name=reports_folder+str(run_numbers[0])+'_'+str(run_numbers[-1])+'_counting_stability.pdf'
 
@@ -141,40 +159,111 @@ def stability(det,run_numbers,data_folder,reports_folder,show_figs=False):
         plt.rc('xtick', labelsize=6)
         plt.rc('ytick', labelsize=6)
 
-        fig, axs = plt.subplots(2,2)
-        plt.suptitle(det.detname + ' Counting stability', x=0.512, y=0.99, fontsize=8, ha='center')
-        [axs[0,0].plot(file_time_array,counts_array[:,n]) for n in range(np.size(counts_array,1))]
-        axs[0,0].set_title('Counts per channel', fontsize=6)
-        axs[0,0].set_xlabel('File number',fontsize=6)
-        axs[0,0].set_ylabel('Counts',fontsize=6)
-        x = axs[0,0].xaxis
+
+        ### ------------------------------------------------------------------####
+        ### above threshold counts
+
+        fig, axs = plt.subplots(2,1)
+        plt.suptitle(det.detname + ' Counting above threshold', x=0.512, y=0.99, fontsize=8, ha='center')
+        [axs[0].plot(file_time_array,counts_above_array[:,n]/duration_array) for n in range(np.size(counts_above_array,1))]
+        axs[0].set_title('Counts rate per channel (Hz)', fontsize=6)
+        axs[0].set_xlabel('File number',fontsize=6)
+        axs[0].set_ylabel('Rate (Hz)',fontsize=6)
+        x = axs[0].xaxis
         for item in x.get_ticklabels():
             item.set_rotation(45)
         
-        [axs[0,1].plot(file_time_array,((100* (counts_array-np.mean(counts_array,0))) /np.mean(counts_array,0))[:,n]) for n in range(np.size(counts_array,1))]
-        axs[0,1].set_title('Counts variation per channel', fontsize=6)
-        axs[0,1].set_xlabel('File number',fontsize=6)
-        axs[0,1].set_ylabel('%',fontsize=6)
-        x = axs[0,1].xaxis
+        [axs[1].plot(file_time_array,counts_above_array[:,n]/duration_array) for n in range(np.size(counts_above_array,1))]
+        axs[1].set_title('Counts rate per channel (Hz)', fontsize=6)
+        axs[1].set_xlabel('File number',fontsize=6)
+        axs[1].set_ylabel('Rate (Hz)',fontsize=6)
+        axs[1].set_yscale('log')
+        
+        x = axs[1].xaxis
         for item in x.get_ticklabels():
             item.set_rotation(45)
             
-        axs[1,0].plot(file_time_array,BM_sum_array)
-        axs[1,0].set_title('Beam monitor counts per channel', fontsize=6)
-        axs[1,0].set_xlabel('File number',fontsize=6)
-        axs[1,0].set_ylabel('Counts',fontsize=6)
-        x = axs[1,0].xaxis
+    
+        plt.tight_layout()
+        pdf.savefig()
+
+
+        ### ------------------------------------------------------------------####
+        ### below threshold counts
+
+        fig, axs = plt.subplots(2,1)
+        plt.suptitle(det.detname + ' Counting below threshold', x=0.512, y=0.99, fontsize=8, ha='center')
+        [axs[0].plot(file_time_array,counts_below_array[:,n]/duration_array) for n in range(np.size(counts_below_array,1))]
+        axs[0].set_title('Counts rate per channel (Hz)', fontsize=6)
+        axs[0].set_xlabel('File number',fontsize=6)
+        axs[0].set_ylabel('Rate (Hz)',fontsize=6)
+        x = axs[0].xaxis
         for item in x.get_ticklabels():
             item.set_rotation(45)
         
-        axs[1,1].plot(file_time_array,100*(BM_sum_array-np.mean(BM_sum_array)) / np.mean(BM_sum_array)) 
-        axs[1,1].set_title('Beam monitor counts variation per channel', fontsize=6)
-        axs[1,1].set_xlabel('File number',fontsize=6)
-        axs[1,1].set_ylabel('%',fontsize=6)
-        x = axs[1,1].xaxis
+        [axs[1].plot(file_time_array,counts_below_array[:,n]/duration_array) for n in range(np.size(counts_below_array,1))]
+        axs[1].set_title('Counts rate per channel (Hz)', fontsize=6)
+        axs[1].set_xlabel('File number',fontsize=6)
+        axs[1].set_ylabel('Rate (Hz)',fontsize=6)
+        axs[1].set_yscale('log')
+        
+        x = axs[1].xaxis
         for item in x.get_ticklabels():
             item.set_rotation(45)
+            
     
+        plt.tight_layout()
+        pdf.savefig()
+        plt.show()
+
+
+        ### ------------------------------------------------------------------####
+        ### total counts summed over all channels
+        
+        fig, axs = plt.subplots(2,1)
+        plt.suptitle(det.detname + ' Total counting', x=0.512, y=0.99, fontsize=8, ha='center')
+        axs[0].plot(file_time_array,np.sum(counts_below_array,1)/duration_array,label='Below threshold')
+        axs[0].plot(file_time_array,np.sum(counts_above_array,1)/duration_array,label='Above threshold')
+        axs[0].legend(fontsize=6)
+
+        axs[0].set_title('Total counts rate (Hz)', fontsize=6)
+        axs[0].set_xlabel('File number',fontsize=6)
+        axs[0].set_ylabel('Rate (Hz)',fontsize=6)
+        x = axs[0].xaxis
+        for item in x.get_ticklabels():
+            item.set_rotation(45)
+        axs[1].plot(file_time_array,np.sum(counts_below_array,1)/duration_array, label='Below threshold')
+        axs[1].plot(file_time_array,np.sum(counts_above_array,1)/duration_array, label='Above threshold')
+        axs[1].legend(fontsize=6)
+        axs[1].set_title('Total counts rate (Hz)', fontsize=6)
+        axs[1].set_xlabel('File number',fontsize=6)
+        axs[1].set_ylabel('Rate (Hz)',fontsize=6)
+        axs[1].set_yscale('log')
+        x = axs[1].xaxis
+        for item in x.get_ticklabels():
+            item.set_rotation(45)
+        plt.tight_layout()
+        pdf.savefig()
+        plt.show()
+
+
+        ### ------------------------------------------------------------------####
+        ### total counts per channel summed over all files
+        fig, axs = plt.subplots(2,1)
+        plt.suptitle(det.detname + ' Total counting per channel', x=0.512, y=0.99, fontsize=8, ha='center')
+        axs[0].bar(np.arange(np.size(counts_below_array,1)),np.sum(counts_below_array,0)/np.sum(duration_array),label='Below threshold')
+        axs[0].bar(np.arange(np.size(counts_above_array,1)),np.sum(counts_above_array,0)/np.sum(duration_array),label='Above threshold')
+        axs[0].legend(fontsize=6)
+        axs[0].set_title('Total counts rate per channel (Hz)', fontsize=6)
+        axs[0].set_xlabel('Channel number',fontsize=6)
+        axs[0].set_ylabel('Rate (Hz)',fontsize=6)
+        axs[1].bar(np.arange(np.size(counts_below_array,1)),np.sum(counts_below_array,0)/np.sum(duration_array),label='Below threshold')
+        axs[1].bar(np.arange(np.size(counts_above_array,1)),np.sum(counts_above_array,0)/np.sum(duration_array),label='Above threshold')
+        axs[1].legend(fontsize=6)
+        axs[1].set_title('Total counts rate per channel (Hz)', fontsize=6)
+        axs[1].set_xlabel('Channel number',fontsize=6)
+        axs[1].set_ylabel('Rate (Hz)',fontsize=6)
+        axs[1].set_yscale('log')
         plt.tight_layout()
         pdf.savefig()
         plt.show()
